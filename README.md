@@ -2,7 +2,7 @@
 
 A beginner machine learning project where I trained an AI to guess a secret number between 1 and 1000 by asking smart yes/no questions. Built using Deep Reinforcement Learning (DQN).
 
-> I am a beginner in both coding and machine learning. This was a learning project and I had Claude  as my coding assistant throughout.
+> I am a beginner in both coding and machine learning. This was a learning project and I had Claude as my coding assistant throughout.
 
 ---
 
@@ -145,7 +145,7 @@ number_guessing_rl/
 
 ## Built with help from
 
-- **Claude ** — My coding assistant. I am a beginner in both Python and machine learning so Claude helped me write, fix and understand some of the code throughout this project.
+- Claude — My coding assistant. I am a beginner in both Python and machine learning so Claude helped me write, fix and understand some of the code throughout this project.
 - **TensorFlow / Keras** — for the neural network
 - **Python 3.11**
 - **Matplotlib + Seaborn** — for the charts
