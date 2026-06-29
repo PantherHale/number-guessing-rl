@@ -1,0 +1,7 @@
+# Python 3.9–3.12 required (TensorFlow does not support 3.13+)
+# Run with: py -3.11 main.py  (or python3.11 main.py)
+numpy>=1.24.0       # arrays + math
+tensorflow>=2.12.0  # neural network (requires Python <=3.12)
+matplotlib>=3.7.0   # charts
+pandas>=2.0.0       # CSV logs
+seaborn>=0.12.0     # heatmap

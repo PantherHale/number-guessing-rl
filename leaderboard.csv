@@ -1,0 +1,13 @@
+run_name,timestamp,episodes,questions_in_vocab,success_rate_pct,avg_reward,top_q_step1,top_q_step2,top_q_step3,top_q_step4,top_q_step5
+run_150000ep,2026-06-29 00:56,150000,82,40.5,25.55,range,modular,range,modular,special
+run_100000ep,2026-06-29 00:29,100000,82,39.7,23.52,range,range,modular,modular,special
+run_50000ep,2026-06-28 22:44,50000,82,39.5,24.21,range,range,modular,modular,special
+run_100000ep,2026-06-28 23:13,100000,82,20.2,2.72,modular,modular,range,range,digit_sum
+run_100000ep,2026-06-28 15:07,100000,82,17.0,7.86,modular,modular,proximity,range,range
+run_5000ep,2026-06-28 02:11,5000,82,11.9,-0.82,range,modular,range,modular,special
+run_1000ep,2026-06-27 19:30,1000,82,3.8,-9.24,range,proximity,range,modular,proximity
+check_300ep,2026-06-27 00:59,300,63,3.3,-4.09,modular,range,range,modular,digit
+check_300ep_v2,2026-06-27 00:59,300,63,3.3,-4.09,modular,range,range,modular,digit
+run_1000ep,2026-06-27 01:40,1000,65,2.3,-7.42,range,range,range,special,modular
+run_1000ep,2026-06-27 12:17,1000,82,1.5,-9.65,special,range,range,digit_sum,range
+run_1000ep,2026-06-27 11:50,1000,82,0.4,-15.49,proximity,special,special,special,range

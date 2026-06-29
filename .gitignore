@@ -1,0 +1,9 @@
+checkpoints/
+__pycache__/
+*.pyc
+*.pyo
+training_log.csv
+training_log_check.csv
+training_log_test.csv
+eval_results_test.csv
+WORKFLOW.md
