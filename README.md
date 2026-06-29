@@ -2,7 +2,7 @@
 
 A beginner machine learning project where I trained an AI to guess a secret number between 1 and 1000 by asking smart yes/no questions. Built using Deep Reinforcement Learning (DQN).
 
-> I am a beginner in both coding and machine learning. This was a learning project and I had Claude (Anthropic's AI) as my coding assistant throughout.
+> I am a beginner in both coding and machine learning. This was a learning project and I had Claude  as my coding assistant throughout.
 
 ---
 
@@ -93,11 +93,6 @@ Which question types the AI used at each step of the game.
 
 ![Question Heatmap](charts/question_heatmap.png)
 
-### Questions Used Per Game
-How many questions the agent used each game.
-
-![Questions Used](charts/questions_used_dist.png)
-
 ---
 
 ## How to run it yourself
@@ -105,26 +100,21 @@ How many questions the agent used each game.
 ### Requirements
 - Python 3.11
 - Install dependencies:
-
 ```
 pip install -r requirements.txt
 ```
-
 ### Train the model
 ```
 py -3.11 main.py
 ```
-
 ### Watch the agent play
 ```
 py -3.11 play_game.py
 ```
-
 ### Quick benchmark (200 games)
 ```
 py -3.11 play_game.py --quick 200
 ```
-
 ### Try a specific number
 ```
 py -3.11 play_game.py --secret 742
@@ -153,23 +143,14 @@ number_guessing_rl/
 
 ---
 
-## What I learned
-
-- What reinforcement learning actually means in practice
-- How a neural network learns from rewards and penalties
-- Why training can sometimes get worse before it gets better
-- That the AI can find strategies I would never have thought of myself
-- How to debug training when things go wrong (my PC restarted mid-training more than once!)
-
----
-
 ## Built with help from
 
-- **Claude (Anthropic)** — my coding assistant. I am a beginner in both Python and machine learning so Claude helped me write, fix and understand the code throughout this project.
+- **Claude ** — My coding assistant. I am a beginner in both Python and machine learning so Claude helped me write, fix and understand some of the code throughout this project.
 - **TensorFlow / Keras** — for the neural network
 - **Python 3.11**
 - **Matplotlib + Seaborn** — for the charts
 
 ---
 
-*This was my first machine learning project. It is not perfect but I learned a lot making it.*
+I hope This Research Interests you .
+Thanks for the support
