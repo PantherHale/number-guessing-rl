@@ -1,3 +1,5 @@
+
+# Reach me Out : gauransharora1404 'a' gmail 'dot'com
 # Number Guessing RL Agent
 
 A beginner machine learning project where I trained an AI to guess a secret number between 1 and 1000 by asking smart yes/no questions. Built using Deep Reinforcement Learning (DQN).
