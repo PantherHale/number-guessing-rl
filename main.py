@@ -14,9 +14,9 @@ def main():
     # ── RESUME SETTINGS ───────────────────────────────────────────────────────
     # Set RESUME_CHECKPOINT to a .h5 path to continue a previous run.
     # Set to None to train from scratch.
-    RESUME_CHECKPOINT   = None
-    RESUME_FROM_EPISODE = 0
-    TOTAL_EPISODES      = 200_000
+    RESUME_CHECKPOINT   = "checkpoints_ddqn\ep100000.weights.h5"
+    RESUME_FROM_EPISODE = 100_000
+    TOTAL_EPISODES      = 300_000
     # ─────────────────────────────────────────────────────────────────────────
 
     env         = NumberGuessingEnv(number_range=(1, 1000), max_questions=6)
