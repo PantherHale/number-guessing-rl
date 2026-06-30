@@ -46,8 +46,8 @@ class Trainer:
                 self._print_progress(actual_ep)
 
             if actual_ep % 10000 == 0 and actual_ep > 0:
-                os.makedirs("checkpoints", exist_ok=True)
-                self.agent.save(f"checkpoints/ep{actual_ep}.weights.h5")
+                os.makedirs("checkpoints_ddqn", exist_ok=True)
+                self.agent.save(f"checkpoints_ddqn/ep{actual_ep}.weights.h5")
 
     def _print_progress(self, actual_ep):
         last_s = self.success_log[-1000:]

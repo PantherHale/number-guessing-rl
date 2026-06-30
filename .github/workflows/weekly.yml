@@ -1,0 +1,116 @@
+name: Weekly — Retrain AI & Deploy
+
+on:
+  schedule:
+    # Every Sunday at 02:00 UTC (after the week's games are collected)
+    - cron: '0 2 * * 0'
+  workflow_dispatch:   # allow manual trigger from GitHub Actions tab
+    inputs:
+      skip_training:
+        description: 'Skip model retraining (just regenerate daily_data.json)'
+        type: boolean
+        default: false
+
+jobs:
+  retrain-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    env:
+      GAMEAPP_DIR: ${{ github.workspace }}/gameapp   # adjust if gameapp is elsewhere in repo
+      MODEL_DIR:   ${{ github.workspace }}/checkpoints
+
+    steps:
+
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # needed so we can push back
+
+      # ── 2. Python env ────────────────────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install tensorflow numpy flask requests
+        working-directory: ${{ github.workspace }}
+
+      # ── 3. Download game logs from the live server ────────────────────────────
+      - name: Download game logs
+        id: fetch_logs
+        env:
+          SERVER_URL:      ${{ secrets.NUMDLE_SERVER_URL }}
+          NUMDLE_ADMIN_KEY: ${{ secrets.NUMDLE_ADMIN_KEY }}
+        run: |
+          mkdir -p /tmp/numdle_logs
+          STATUS=$(curl -s -o /tmp/numdle_logs/export.json \
+            -w "%{http_code}" \
+            -H "X-Admin-Key: $NUMDLE_ADMIN_KEY" \
+            "$SERVER_URL/admin/logs/export")
+          echo "HTTP status: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::warning::Could not fetch logs (status $STATUS) — using existing log files"
+            echo "has_logs=false" >> $GITHUB_OUTPUT
+          else
+            TOTAL=$(python3 -c "import json;d=json.load(open('/tmp/numdle_logs/export.json'));print(d.get('total',0))")
+            echo "Fetched $TOTAL game records"
+            echo "has_logs=true" >> $GITHUB_OUTPUT
+          fi
+
+      # ── 4. Save export as a week log file ────────────────────────────────────
+      - name: Persist weekly log
+        if: steps.fetch_logs.outputs.has_logs == 'true'
+        run: |
+          WEEK=$(date -d 'last monday' +%Y-%m-%d)
+          cp /tmp/numdle_logs/export.json gameapp/logs/week_${WEEK}.json
+          echo "Saved to gameapp/logs/week_${WEEK}.json"
+
+      # ── 5. Retrain the AI model ───────────────────────────────────────────────
+      - name: Retrain RL model on this week's logs
+        if: ${{ !inputs.skip_training && steps.fetch_logs.outputs.has_logs == 'true' }}
+        working-directory: gameapp
+        run: |
+          # Use only the most recent week's log — the export.json we just fetched
+          LOG_FILE=$(ls logs/week_*.json 2>/dev/null | sort | tail -1)
+          if [ -z "$LOG_FILE" ]; then
+            echo "::warning::No log file found — skipping retraining"
+          else
+            echo "Training on: $LOG_FILE"
+            python train_on_logs.py "$LOG_FILE" --epochs 25
+          fi
+
+      # ── 6. Pre-compute next week's AI answers ────────────────────────────────
+      - name: Precompute next-week numbers
+        working-directory: gameapp
+        run: python precompute.py --next-week
+
+      # ── 7. Commit updated daily_data.json ────────────────────────────────────
+      - name: Commit & push daily_data.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add gameapp/public/daily_data.json
+          git add gameapp/logs/ || true
+          git add checkpoints/human_finetuned.weights.h5 || true
+          if git diff --cached --quiet; then
+            echo "Nothing changed — skipping commit"
+          else
+            WEEK=$(date -d 'next monday' +%Y-%m-%d)
+            git commit -m "chore: weekly update — AI precomputed through ${WEEK}"
+            git push origin HEAD
+          fi
+
+      # ── 8. Deploy to Cloudflare Pages ────────────────────────────────────────
+      - name: Deploy frontend to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken:   ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId:  ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy gameapp/public --project-name=numdle --commit-dirty=true

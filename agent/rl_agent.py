@@ -10,6 +10,17 @@ tf.get_logger().setLevel("ERROR")
 
 
 class RLAgent:
+    """
+    Deep Q-Network agent with Double DQN target calculation.
+
+    Standard DQN picks the best next action AND evaluates it with the same
+    (target) network, leading to overestimation.  Double DQN separates the
+    two steps:
+        action selection  — online network   argmax Q_online(s', .)
+        action evaluation — target network   Q_target(s', a*)
+    This reduces the upward bias without adding extra networks.
+    """
+
     def __init__(
         self,
         state_size,
@@ -31,20 +42,31 @@ class RLAgent:
         self.epsilon_decay = epsilon_decay
         self.batch_size    = batch_size
         self.memory        = deque(maxlen=memory_size)
-        self.model         = self._build_model()
-        self.target_model  = self._build_model()
+
+        # Online network — trained every replay step
+        self.model        = self._build_model()
+        # Target network — weights copied from online periodically
+        self.target_model = self._build_model()
         self.update_target_network()
+
+    # ── Network architecture ──────────────────────────────────────────────────
 
     def _build_model(self):
         model = Sequential([
             Input(shape=(self.state_size,)),
+            Dense(512, activation="relu"),
+            Dense(512, activation="relu"),
             Dense(256, activation="relu"),
-            Dense(256, activation="relu"),
-            Dense(128, activation="relu"),
             Dense(self.action_size, activation="linear"),
         ])
-        model.compile(optimizer=Adam(learning_rate=self.lr, clipnorm=1.0), loss="mse")
+        # Huber loss is more robust than MSE to noisy reward signals
+        model.compile(
+            optimizer=Adam(learning_rate=self.lr, clipnorm=1.0),
+            loss=tf.keras.losses.Huber(),
+        )
         return model
+
+    # ── Action selection ──────────────────────────────────────────────────────
 
     def select_action(self, state, forbidden=None):
         forbidden = forbidden or set()
@@ -60,8 +82,12 @@ class RLAgent:
             q_values[i] = -np.inf
         return int(np.argmax(q_values))
 
+    # ── Memory ────────────────────────────────────────────────────────────────
+
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
+
+    # ── Double DQN replay ─────────────────────────────────────────────────────
 
     def replay(self):
         if len(self.memory) < self.batch_size:
@@ -69,22 +95,46 @@ class RLAgent:
 
         batch       = random.sample(self.memory, self.batch_size)
         states      = np.array([e[0] for e in batch])
+        actions     = np.array([e[1] for e in batch])
+        rewards     = np.array([e[2] for e in batch])
         next_states = np.array([e[3] for e in batch])
-        cur_q       = self.model(states, training=False).numpy()
-        next_q      = self.target_model(next_states, training=False).numpy()
+        dones       = np.array([e[4] for e in batch], dtype=np.float32)
 
-        for i, (s, a, r, s2, done) in enumerate(batch):
-            # Bellman: Q(s,a) = r + gamma * max Q(s')
-            cur_q[i][a] = r if done else r + self.gamma * float(np.max(next_q[i]))
+        # Current Q-values for all actions (we update only the taken action)
+        cur_q = self.model(states, training=False).numpy()
+
+        # Double DQN target:
+        #   a* = argmax  Q_online(s', .)      — online net SELECTS the action
+        #   y  = r + γ * Q_target(s', a*)     — target net EVALUATES it
+        next_q_online = self.model(next_states, training=False).numpy()
+        next_q_target = self.target_model(next_states, training=False).numpy()
+        best_next_actions = np.argmax(next_q_online, axis=1)
+
+        for i in range(len(batch)):
+            a = actions[i]
+            if dones[i]:
+                cur_q[i][a] = rewards[i]
+            else:
+                cur_q[i][a] = (
+                    rewards[i]
+                    + self.gamma * next_q_target[i][best_next_actions[i]]
+                )
 
         self.model.train_on_batch(states, cur_q)
         self.decay_epsilon()
 
+    # ── Target network ────────────────────────────────────────────────────────
+
     def update_target_network(self):
+        """Hard update: copy online weights to target network."""
         self.target_model.set_weights(self.model.get_weights())
+
+    # ── Epsilon decay ─────────────────────────────────────────────────────────
 
     def decay_epsilon(self):
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+
+    # ── Persistence ───────────────────────────────────────────────────────────
 
     def save(self, path):
         self.model.save_weights(path)
