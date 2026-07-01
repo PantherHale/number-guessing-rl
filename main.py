@@ -5,7 +5,7 @@ from training.trainer import Trainer
 from evaluation.evaluator import Evaluator
 from leaderboard import record_run, show_leaderboard
 
-CHECKPOINT_DIR = "checkpoints_ddqn"
+CHECKPOINT_DIR = "checkpoints_ddqn_v3"
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 os.makedirs("charts", exist_ok=True)
 
@@ -14,9 +14,9 @@ def main():
     # ── RESUME SETTINGS ───────────────────────────────────────────────────────
     # Set RESUME_CHECKPOINT to a .h5 path to continue a previous run.
     # Set to None to train from scratch.
-    RESUME_CHECKPOINT   = "checkpoints_ddqn\ep100000.weights.h5"
-    RESUME_FROM_EPISODE = 100_000
-    TOTAL_EPISODES      = 300_000
+    RESUME_CHECKPOINT   = None
+    RESUME_FROM_EPISODE = 0
+    TOTAL_EPISODES      = 400_000
     # ─────────────────────────────────────────────────────────────────────────
 
     env         = NumberGuessingEnv(number_range=(1, 1000), max_questions=6)
@@ -47,14 +47,14 @@ def main():
         epsilon_min=0.01,
         epsilon_decay=0.9998,
         memory_size=100_000,
-        batch_size=64,
+        batch_size=128,
     )
 
     if RESUME_CHECKPOINT and os.path.exists(RESUME_CHECKPOINT):
         agent.load(RESUME_CHECKPOINT)
         print(f"Loaded weights from {RESUME_CHECKPOINT}")
 
-    trainer = Trainer(env=env, agent=agent, episodes=remaining, start_episode=start_ep)
+    trainer = Trainer(env=env, agent=agent, episodes=remaining, start_episode=start_ep, replay_frequency=4)
     trainer.train()
     trainer.save_logs("training_log.csv")
 

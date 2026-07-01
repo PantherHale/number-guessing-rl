@@ -4,12 +4,13 @@ import pandas as pd
 
 
 class Trainer:
-    def __init__(self, env, agent, episodes=100_000, start_episode=0):
+    def __init__(self, env, agent, episodes=100_000, start_episode=0, replay_frequency=4):
         self.env              = env
         self.agent            = agent
         self.episodes         = episodes
         self.start_episode    = start_episode
         self.total_episodes   = start_episode + episodes
+        self.replay_frequency   = replay_frequency
         self.target_update_freq = 500
         self.rewards_log        = []
         self.success_log        = []
@@ -30,7 +31,9 @@ class Trainer:
                 state    = ns
                 total_r += r
 
-            self.agent.replay()
+            for _ in range(self.replay_frequency):
+                self.agent.replay()
+            self.agent.decay_epsilon()
             success = int(info["guess"] == info["secret"])
 
             self.rewards_log.append(total_r)
@@ -41,13 +44,12 @@ class Trainer:
             if actual_ep % self.target_update_freq == 0:
                 self.agent.update_target_network()
 
-            freq = max(100, self.total_episodes // 20)
-            if actual_ep % freq == 0:
+            if actual_ep % 1000 == 0:
                 self._print_progress(actual_ep)
 
             if actual_ep % 10000 == 0 and actual_ep > 0:
-                os.makedirs("checkpoints_ddqn", exist_ok=True)
-                self.agent.save(f"checkpoints_ddqn/ep{actual_ep}.weights.h5")
+                os.makedirs("checkpoints_ddqn_v3", exist_ok=True)
+                self.agent.save(f"checkpoints_ddqn_v3/ep{actual_ep}.weights.h5")
 
     def _print_progress(self, actual_ep):
         last_s = self.success_log[-1000:]

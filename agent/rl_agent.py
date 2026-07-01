@@ -94,34 +94,31 @@ class RLAgent:
             return
 
         batch       = random.sample(self.memory, self.batch_size)
-        states      = np.array([e[0] for e in batch])
+        states      = np.array([e[0] for e in batch], dtype=np.float32)
         actions     = np.array([e[1] for e in batch])
-        rewards     = np.array([e[2] for e in batch])
-        next_states = np.array([e[3] for e in batch])
+        rewards     = np.array([e[2] for e in batch], dtype=np.float32)
+        next_states = np.array([e[3] for e in batch], dtype=np.float32)
         dones       = np.array([e[4] for e in batch], dtype=np.float32)
 
-        # Current Q-values for all actions (we update only the taken action)
-        cur_q = self.model(states, training=False).numpy()
+        # Single forward pass through online net for both states and next_states
+        bs = len(batch)
+        combined      = self.model(np.vstack([states, next_states]), training=False).numpy()
+        cur_q         = combined[:bs].copy()
+        next_q_online = combined[bs:]
 
         # Double DQN target:
         #   a* = argmax  Q_online(s', .)      — online net SELECTS the action
         #   y  = r + γ * Q_target(s', a*)     — target net EVALUATES it
-        next_q_online = self.model(next_states, training=False).numpy()
-        next_q_target = self.target_model(next_states, training=False).numpy()
+        next_q_target     = self.target_model(next_states, training=False).numpy()
         best_next_actions = np.argmax(next_q_online, axis=1)
 
-        for i in range(len(batch)):
-            a = actions[i]
-            if dones[i]:
-                cur_q[i][a] = rewards[i]
-            else:
-                cur_q[i][a] = (
-                    rewards[i]
-                    + self.gamma * next_q_target[i][best_next_actions[i]]
-                )
+        # Vectorised target update — no Python loop
+        idx         = np.arange(bs)
+        best_next_q = next_q_target[idx, best_next_actions]
+        targets     = np.where(dones, rewards, rewards + self.gamma * best_next_q)
+        cur_q[idx, actions] = targets
 
         self.model.train_on_batch(states, cur_q)
-        self.decay_epsilon()
 
     # ── Target network ────────────────────────────────────────────────────────
 

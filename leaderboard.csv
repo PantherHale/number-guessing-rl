@@ -3,7 +3,9 @@ run_150000ep,2026-06-29 00:56,150000,82,40.5,25.55,range,modular,range,modular,s
 run_100000ep,2026-06-29 00:29,100000,82,39.7,23.52,range,range,modular,modular,special
 run_50000ep,2026-06-28 22:44,50000,82,39.5,24.21,range,range,modular,modular,special
 run_100000ep,2026-06-28 23:13,100000,82,20.2,2.72,modular,modular,range,range,digit_sum
+run_300000ep,2026-07-01 00:57,300000,82,17.6,4.48,range,modular,modular,range,divisible
 run_100000ep,2026-06-28 15:07,100000,82,17.0,7.86,modular,modular,proximity,range,range
+run_300000ep,2026-07-01 20:12,300000,82,14.3,17.24,divisible,range,modular,range,modular
 run_5000ep,2026-06-28 02:11,5000,82,11.9,-0.82,range,modular,range,modular,special
 run_100000ep,2026-06-30 19:13,100000,82,8.0,-0.7,proximity,range,range,proximity,digit_compare
 run_1000ep,2026-06-27 19:30,1000,82,3.8,-9.24,range,proximity,range,modular,proximity
